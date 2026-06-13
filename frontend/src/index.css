@@ -1,0 +1,66 @@
+:root {
+  --navy: #2e4057;
+  --teal: #048a81;
+  --white: #ffffff;
+  --bg: #f4f6f8;
+  --muted: #6b7a8d;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  color: var(--navy);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input {
+  font-family: inherit;
+}
+
+a {
+  color: var(--teal);
+}
+
+/* Plan view: list + map side by side on desktop, stacked on mobile. */
+.plan-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.plan-grid .map-column {
+  position: sticky;
+  top: 16px;
+  min-width: 0;
+  height: 70vh;
+  min-height: 360px;
+}
+
+@media (max-width: 760px) {
+  .plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-grid .map-column {
+    position: static;
+    height: 50vh;
+  }
+}
