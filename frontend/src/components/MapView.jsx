@@ -12,6 +12,7 @@ export default function MapView({ stops, visited }) {
   const markers = useRef([]);
   const infoWindow = useRef(null);
   const [error, setError] = useState(null);
+  const [ready, setReady] = useState(false);
 
   // Load the Maps JS API once.
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function MapView({ stops, visited }) {
           mapId: "WANDR_MAP",
         });
         infoWindow.current = new InfoWindow();
+        setReady(true);
       })
       .catch((err) => setError(err.message));
 
@@ -91,7 +93,7 @@ export default function MapView({ stops, visited }) {
     } else if (located.length > 1) {
       mapObj.current.fitBounds(bounds, 60);
     }
-  }, [stops, visited]);
+  }, [stops, visited, ready]);
 
   if (error) {
     return <div style={styles.placeholder}>{error}</div>;
