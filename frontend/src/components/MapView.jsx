@@ -1,5 +1,6 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import { useEffect, useRef, useState } from "react";
+import { locatedStops } from "../utils/proximity.js";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -54,7 +55,7 @@ export default function MapView({ stops, visited }) {
     markers.current = [];
 
     const bounds = new google.maps.LatLngBounds();
-    const located = stops.filter((s) => s.lat != null && s.lng != null);
+    const located = locatedStops(stops);
 
     located.forEach((stop) => {
       const isVisited = visited?.has(stop.name);

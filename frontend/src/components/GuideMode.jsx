@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useGeolocation } from "../hooks/useGeolocation.js";
 import { fetchNarration } from "../utils/api.js";
-import { haversineDistance } from "../utils/distance.js";
+import { arrivedStop, findNearestStop, locatedStops } from "../utils/proximity.js";
 
-const PROXIMITY_METRES = 100;
 const CHECK_INTERVAL_MS = 10000;
 
 // On-the-go guide. Tracks GPS, and when the traveller comes within 100m of an
@@ -17,32 +16,22 @@ export default function GuideMode({ stops, city, visited, onVisit }) {
   const [loadingStop, setLoadingStop] = useState(null);
   const narratedRef = useRef(new Set(visited ? [...visited] : []));
 
-  const located = (stops || []).filter((s) => s.lat != null && s.lng != null);
+  const located = locatedStops(stops);
 
   useEffect(() => {
     if (!position || located.length === 0) return;
 
     const tick = async () => {
-      // Find the closest stop to the current position.
-      let closest = null;
-      let closestDist = Infinity;
-      for (const stop of located) {
-        const d = haversineDistance(position.lat, position.lng, stop.lat, stop.lng);
-        if (d < closestDist) {
-          closestDist = d;
-          closest = stop;
-        }
-      }
-      setNearest(closest ? { ...closest, distance: closestDist } : null);
+      const nearest = findNearestStop(position, located);
+      setNearest(nearest ? { ...nearest.stop, distance: nearest.distance } : null);
 
-      if (
-        closest &&
-        closestDist <= PROXIMITY_METRES &&
-        !narratedRef.current.has(closest.name)
-      ) {
-        narratedRef.current.add(closest.name);
-        onVisit?.(closest.name);
-        await narrate(closest);
+      // arrivedStop returns a stop only when it's in range and not yet narrated,
+      // so each stop fires its narration exactly once per session.
+      const arrived = arrivedStop(position, located, narratedRef.current);
+      if (arrived) {
+        narratedRef.current.add(arrived.name);
+        onVisit?.(arrived.name);
+        await narrate(arrived);
       }
     };
 

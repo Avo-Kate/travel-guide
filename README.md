@@ -54,22 +54,38 @@ Open the app, enter `Paris` / `3` days, and submit. Generation takes ~10–20 se
 
 ## Testing
 
-The backend has an offline test suite (helpers + both endpoints). The tests
-**stub out the Anthropic client and Google geocoding**, so they need no real API
-keys and make no network calls.
+Both halves have fast, offline test suites — no API keys, no network, no running
+the app or a browser.
 
-If you haven't set up the backend yet, create and activate the virtualenv first
-(see [Getting started → Backend](#1-backend)). Then, from `backend/` with the
-venv active, install `pytest` and run it:
+### Backend
+
+Helpers + both endpoints, with the Anthropic client and Google geocoding
+**stubbed out**. If you haven't set up the backend yet, create and activate the
+virtualenv first (see [Getting started → Backend](#1-backend)). Then, from
+`backend/` with the venv active, install `pytest` and run it:
 
 ```bash
 cd backend
 source .venv/bin/activate   # if not already active
 pip install pytest
-pytest
+python -m pytest
 ```
 
-The suite runs in well under a second.
+### Frontend
+
+The Guide Mode logic that doesn't need a browser — Haversine distance and the
+proximity/arrival decision (which stop is nearest, whether you're within range,
+whether it's already been narrated) — is extracted into pure functions in
+`src/utils/` and covered by [Vitest](https://vitest.dev). This lets you exercise
+the core "did the traveller arrive at a stop?" behaviour in code:
+
+```bash
+cd frontend
+npm install        # first time only — adds vitest
+npm test           # or `npm run test:watch`
+```
+
+Both suites run in well under a second.
 
 ## Environment variables
 
@@ -111,7 +127,10 @@ The suite runs in well under a second.
 │       │   └── useGeolocation.js     # GPS tracking via watchPosition
 │       └── utils/
 │           ├── api.js                # API calls to the backend
-│           └── distance.js           # Haversine distance (metres)
+│           ├── distance.js           # Haversine distance (metres)
+│           ├── distance.test.js      # Vitest: distance maths
+│           ├── proximity.js          # Nearest-stop + arrival logic (pure)
+│           └── proximity.test.js     # Vitest: proximity/arrival decisions
 ├── backend/
 │   ├── main.py                       # FastAPI app: /itinerary + /narration
 │   ├── requirements.txt
@@ -140,13 +159,13 @@ The suite runs in well under a second.
 - [x] Save itinerary to localStorage
 
 ### POC — Phase 2: Guide Mode
-- [ ] GPS location tracking
-- [ ] Proximity detection (within 100m of a stop)
-- [ ] FastAPI /narration endpoint
-- [ ] Claude narration generation
-- [ ] Audio playback via Web Speech API
-- [ ] Guide Mode UI (toggle from Plan Mode)
-- [ ] Mark stops as visited on map
+- [x] GPS location tracking
+- [x] Proximity detection (within 100m of a stop)
+- [x] FastAPI /narration endpoint
+- [x] Claude narration generation
+- [x] Audio playback via Web Speech API
+- [x] Guide Mode UI (toggle from Plan Mode)
+- [x] Mark stops as visited on map
 
 ### POC — Polish
 - [ ] Error handling and loading states
