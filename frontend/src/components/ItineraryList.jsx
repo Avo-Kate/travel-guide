@@ -8,8 +8,17 @@ const CATEGORY_COLORS = {
   other: "#6b7a8d",
 };
 
-// Groups stops by day and renders each with category badge, description, duration.
-export default function ItineraryList({ stops }) {
+// Groups stops by day and renders each with category badge, description and
+// duration. Each geocoded stop also gets a "Listen" button that plays Claude's
+// narration aloud; when a stop is active its narration text is shown inline.
+export default function ItineraryList({
+  stops,
+  onListen,
+  active,
+  speaking,
+  loadingName,
+  visited,
+}) {
   if (!stops || stops.length === 0) return null;
 
   const byDay = stops.reduce((acc, stop) => {
@@ -29,28 +38,56 @@ export default function ItineraryList({ stops }) {
           {byDay[day]
             .slice()
             .sort((a, b) => a.order - b.order)
-            .map((stop, i) => (
-              <article key={`${day}-${i}`} style={styles.card}>
-                <div style={styles.cardHeader}>
-                  <span style={styles.name}>
-                    {stop.order}. {stop.name}
-                  </span>
-                  <span
-                    style={{
-                      ...styles.badge,
-                      background: CATEGORY_COLORS[stop.category] || CATEGORY_COLORS.other,
-                    }}
-                  >
-                    {stop.category}
-                  </span>
-                </div>
-                <p style={styles.description}>{stop.description}</p>
-                <span style={styles.duration}>
-                  ⏱ {stop.duration_minutes} min
-                  {stop.lat == null && "  ·  📍 location not found"}
-                </span>
-              </article>
-            ))}
+            .map((stop, i) => {
+              const located = stop.lat != null && stop.lng != null;
+              const isActive = active?.name === stop.name;
+              const isLoading = loadingName === stop.name;
+              const isVisited = visited?.has(stop.name);
+              return (
+                <article key={`${day}-${i}`} style={styles.card}>
+                  <div style={styles.cardHeader}>
+                    <span style={styles.name}>
+                      {isVisited && <span style={styles.tick}>✓ </span>}
+                      {stop.order}. {stop.name}
+                    </span>
+                    <span
+                      style={{
+                        ...styles.badge,
+                        background:
+                          CATEGORY_COLORS[stop.category] || CATEGORY_COLORS.other,
+                      }}
+                    >
+                      {stop.category}
+                    </span>
+                  </div>
+                  <p style={styles.description}>{stop.description}</p>
+                  <div style={styles.footer}>
+                    <span style={styles.duration}>
+                      ⏱ {stop.duration_minutes} min
+                      {!located && "  ·  📍 location not found"}
+                    </span>
+                    {located && onListen && (
+                      <button
+                        onClick={() => onListen(stop)}
+                        disabled={isLoading}
+                        style={isActive ? styles.listenActive : styles.listen}
+                      >
+                        {isLoading
+                          ? "…"
+                          : isActive && speaking
+                          ? "■ Stop"
+                          : isActive
+                          ? "▶ Replay"
+                          : "▶ Listen"}
+                      </button>
+                    )}
+                  </div>
+                  {isActive && active.text && (
+                    <p style={styles.narration}>{active.text}</p>
+                  )}
+                </article>
+              );
+            })}
         </section>
       ))}
     </div>
@@ -75,6 +112,7 @@ const styles = {
     marginBottom: 6,
   },
   name: { fontWeight: 600, fontSize: 15.5 },
+  tick: { color: "var(--teal)" },
   badge: {
     color: "#fff",
     fontSize: 11,
@@ -85,5 +123,40 @@ const styles = {
     whiteSpace: "nowrap",
   },
   description: { margin: "0 0 8px", fontSize: 14, lineHeight: 1.5, color: "#3c4a5a" },
+  footer: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
   duration: { fontSize: 12.5, color: "var(--muted)" },
+  listen: {
+    border: "1px solid var(--teal)",
+    background: "transparent",
+    color: "var(--teal)",
+    padding: "6px 14px",
+    borderRadius: 999,
+    fontWeight: 600,
+    fontSize: 13,
+    whiteSpace: "nowrap",
+  },
+  listenActive: {
+    border: "1px solid var(--teal)",
+    background: "var(--teal)",
+    color: "#fff",
+    padding: "6px 14px",
+    borderRadius: 999,
+    fontWeight: 600,
+    fontSize: 13,
+    whiteSpace: "nowrap",
+  },
+  narration: {
+    margin: "12px 0 0",
+    padding: "12px 14px",
+    background: "#f0fbfa",
+    borderRadius: 10,
+    fontSize: 14,
+    lineHeight: 1.6,
+    color: "var(--navy)",
+  },
 };
