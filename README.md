@@ -1,12 +1,12 @@
 # Wandr — Your AI Travel Guide
 
-Wandr turns a city and a number of days into a structured, mapped, geocoded itinerary — and then walks the trip with you, narrating each stop aloud as you arrive.
+Wandr turns a city and a number of days into a structured, mapped, geocoded itinerary — and narrates any stop aloud on demand, all on a single page.
 
 ## What it does
 
-**Plan Mode** — Enter a city and trip length. The backend uses Claude with live web search to synthesise a well-reviewed, day-by-day itinerary, geocodes each stop with Google, and renders it as a readable list alongside a Google Map with numbered pins.
+Enter a city and trip length. The backend uses Claude with live web search to synthesise a well-reviewed, day-by-day itinerary, geocodes each stop with Google, and renders it as a readable list alongside a Google Map with numbered pins.
 
-**Guide Mode** — Open Wandr on your phone while travelling. It tracks your GPS location, and when you come within ~100 m of a stop it asks Claude for a short, fun historical narration and reads it aloud through your browser's built-in text-to-speech. Visited stops are checked off on the map and list.
+Each stop has a **Listen** button: tap it and Claude writes a short, fun historical narration that's read aloud through your browser's built-in text-to-speech. Stops you've listened to are checked off and muted on the map.
 
 ## Tech stack
 
@@ -73,11 +73,9 @@ python -m pytest
 
 ### Frontend
 
-The Guide Mode logic that doesn't need a browser — Haversine distance and the
-proximity/arrival decision (which stop is nearest, whether you're within range,
-whether it's already been narrated) — is extracted into pure functions in
-`src/utils/` and covered by [Vitest](https://vitest.dev). This lets you exercise
-the core "did the traveller arrive at a stop?" behaviour in code:
+The browser-free logic — filtering stops down to those that geocoded, which the
+map and list both rely on — is extracted into a pure function in `src/utils/`
+and covered by [Vitest](https://vitest.dev):
 
 ```bash
 cd frontend
@@ -115,22 +113,19 @@ Both suites run in well under a second.
 │   ├── package.json
 │   └── src/
 │       ├── main.jsx                  # React entry point
-│       ├── App.jsx                   # App shell + Plan/Guide mode toggle
+│       ├── App.jsx                   # Single-page shell (form + list + map)
 │       ├── index.css                 # Global styles + responsive grid
 │       ├── components/
 │       │   ├── CityForm.jsx          # City + days input form
-│       │   ├── ItineraryList.jsx     # List view of stops, grouped by day
-│       │   ├── MapView.jsx           # Google Map with numbered stop pins
-│       │   └── GuideMode.jsx         # GPS tracking + narration UI
+│       │   ├── ItineraryList.jsx     # List of stops (grouped by day) + Listen
+│       │   └── MapView.jsx           # Google Map with numbered stop pins
 │       ├── hooks/
 │       │   ├── useItinerary.js       # Fetch + persist itinerary (localStorage)
-│       │   └── useGeolocation.js     # GPS tracking via watchPosition
+│       │   └── useNarration.js       # Fetch narration + Web Speech playback
 │       └── utils/
 │           ├── api.js                # API calls to the backend
-│           ├── distance.js           # Haversine distance (metres)
-│           ├── distance.test.js      # Vitest: distance maths
-│           ├── proximity.js          # Nearest-stop + arrival logic (pure)
-│           └── proximity.test.js     # Vitest: proximity/arrival decisions
+│           ├── proximity.js          # Geocoded-stop filtering (pure)
+│           └── proximity.test.js     # Vitest: locatedStops
 ├── backend/
 │   ├── main.py                       # FastAPI app: /itinerary + /narration
 │   ├── requirements.txt
@@ -158,14 +153,12 @@ Both suites run in well under a second.
 - [x] Google Maps integration with stop pins
 - [x] Save itinerary to localStorage
 
-### POC — Phase 2: Guide Mode
-- [x] GPS location tracking
-- [x] Proximity detection (within 100m of a stop)
+### POC — Phase 2: Narration
 - [x] FastAPI /narration endpoint
 - [x] Claude narration generation
+- [x] Per-stop Listen button on the itinerary
 - [x] Audio playback via Web Speech API
-- [x] Guide Mode UI (toggle from Plan Mode)
-- [x] Mark stops as visited on map
+- [x] Mark listened stops as visited on map
 
 ### POC — Polish
 - [ ] Error handling and loading states
