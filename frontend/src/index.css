@@ -1,9 +1,17 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&display=swap");
+
 :root {
-  --navy: #2e4057;
-  --teal: #048a81;
+  --navy: #233246;
+  --teal: #0a8e84;
+  --teal-dark: #0a6f67;
   --white: #ffffff;
-  --bg: #f4f6f8;
+  --bg: #f5f3ee;
   --muted: #6b7a8d;
+  --border: #e8e3d9;
+  --shadow-sm: 0 1px 2px rgba(35, 50, 70, 0.06);
+  --shadow-md: 0 14px 34px -16px rgba(35, 50, 70, 0.28);
+  --radius: 14px;
+  --serif: "Fraunces", "Iowan Old Style", Georgia, serif;
 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
@@ -16,34 +24,195 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
+  /* Warm paper base with a faint teal glow up top — texture without noise. */
+  background: radial-gradient(
+      1200px 480px at 50% -220px,
+      rgba(10, 142, 132, 0.07),
+      transparent 70%
+    ),
+    var(--bg);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-input {
-  font-family: inherit;
+::selection {
+  background: rgba(10, 142, 132, 0.18);
 }
 
 a {
   color: var(--teal);
 }
 
-/* Plan view: list + map side by side on desktop, stacked on mobile. */
+input {
+  font-family: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Keyboard focus: a soft teal ring, never a hard browser outline. */
+:where(button, a, input):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(10, 142, 132, 0.3);
+}
+
+/* ---- Masthead ---------------------------------------------------------- */
+.app-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding-bottom: 18px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wordmark {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 32px;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--teal), var(--navy));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* ---- Surfaces ---------------------------------------------------------- */
+.surface-card {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.stop-card {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s ease, box-shadow 0.25s ease, border-color 0.2s ease;
+}
+
+.stop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: #ded7c9;
+}
+
+.stop-card.is-active {
+  border-color: var(--teal);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---- Day headings: title trailed by a thin editorial rule -------------- */
+.day-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 21px;
+  color: var(--navy);
+}
+
+.day-heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--border), transparent);
+}
+
+/* ---- Controls ---------------------------------------------------------- */
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 16px;
+  color: var(--navy);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(10, 142, 132, 0.16);
+}
+
+.btn-primary {
+  padding: 13px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--white);
+  background: var(--teal);
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px -10px rgba(10, 142, 132, 0.85);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--teal-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 11px 22px -10px rgba(10, 142, 132, 0.85);
+}
+
+.btn-ghost {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--teal);
+  color: var(--teal);
+  transform: translateY(-1px);
+}
+
+.listen-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.narration-text {
+  animation: rise 0.3s ease both;
+}
+
+/* ---- Plan view: list + map side by side on desktop, stacked on mobile -- */
 .plan-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
+  animation: rise 0.4s ease both;
 }
 
 .plan-grid .map-column {
@@ -52,6 +221,21 @@ a {
   min-width: 0;
   height: 70vh;
   min-height: 360px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 760px) {
@@ -62,5 +246,14 @@ a {
   .plan-grid .map-column {
     position: static;
     height: 50vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
   }
 }

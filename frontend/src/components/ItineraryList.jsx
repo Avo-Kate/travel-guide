@@ -34,7 +34,7 @@ export default function ItineraryList({
     <div style={styles.wrap}>
       {days.map((day) => (
         <section key={day} style={styles.day}>
-          <h3 style={styles.dayHeading}>Day {day}</h3>
+          <h3 className="day-heading">Day {day}</h3>
           {byDay[day]
             .slice()
             .sort((a, b) => a.order - b.order)
@@ -44,7 +44,11 @@ export default function ItineraryList({
               const isLoading = loadingName === stop.name;
               const isVisited = visited?.has(stop.name);
               return (
-                <article key={`${day}-${i}`} style={styles.card}>
+                <article
+                  key={`${day}-${i}`}
+                  className={isActive ? "stop-card is-active" : "stop-card"}
+                  style={styles.card}
+                >
                   <div style={styles.cardHeader}>
                     <span style={styles.name}>
                       {isVisited && <span style={styles.tick}>✓ </span>}
@@ -70,6 +74,7 @@ export default function ItineraryList({
                       <button
                         onClick={() => onListen(stop)}
                         disabled={isLoading}
+                        className="listen-btn"
                         style={isActive ? styles.listenActive : styles.listen}
                       >
                         {isLoading
@@ -83,7 +88,9 @@ export default function ItineraryList({
                     )}
                   </div>
                   {isActive && active.text && (
-                    <p style={styles.narration}>{active.text}</p>
+                    <p className="narration-text" style={styles.narration}>
+                      {active.text}
+                    </p>
                   )}
                 </article>
               );
@@ -97,12 +104,10 @@ export default function ItineraryList({
 const styles = {
   wrap: { display: "flex", flexDirection: "column", gap: 22 },
   day: { display: "flex", flexDirection: "column", gap: 12 },
-  dayHeading: { margin: 0, fontSize: 18, color: "var(--navy)" },
   card: {
     background: "var(--white)",
-    borderRadius: 12,
+    borderRadius: "var(--radius)",
     padding: 16,
-    boxShadow: "0 1px 3px rgba(46,64,87,0.08)",
   },
   cardHeader: {
     display: "flex",
@@ -152,9 +157,10 @@ const styles = {
   },
   narration: {
     margin: "12px 0 0",
-    padding: "12px 14px",
+    padding: "12px 16px",
     background: "#f0fbfa",
-    borderRadius: 10,
+    borderLeft: "3px solid var(--teal)",
+    borderRadius: "0 10px 10px 0",
     fontSize: 14,
     lineHeight: 1.6,
     color: "var(--navy)",
