@@ -52,6 +52,25 @@ The app runs at `http://localhost:5173`.
 
 Open the app, enter `Paris` / `3` days, and submit. Generation takes ~10–20 seconds (Claude is searching the web). The itinerary then renders as a list and on the map.
 
+## Testing
+
+The backend has an offline test suite (helpers + both endpoints). The tests
+**stub out the Anthropic client and Google geocoding**, so they need no real API
+keys and make no network calls.
+
+If you haven't set up the backend yet, create and activate the virtualenv first
+(see [Getting started → Backend](#1-backend)). Then, from `backend/` with the
+venv active, install `pytest` and run it:
+
+```bash
+cd backend
+source .venv/bin/activate   # if not already active
+pip install pytest
+pytest
+```
+
+The suite runs in well under a second.
+
 ## Environment variables
 
 ### Backend (`backend/.env`)
@@ -96,6 +115,8 @@ Open the app, enter `Paris` / `3` days, and submit. Generation takes ~10–20 se
 ├── backend/
 │   ├── main.py                       # FastAPI app: /itinerary + /narration
 │   ├── requirements.txt
+│   ├── tests/
+│   │   └── test_main.py              # offline tests for helpers + endpoints
 │   └── .env.example                  # API key placeholders
 ├── .gitignore
 └── README.md
