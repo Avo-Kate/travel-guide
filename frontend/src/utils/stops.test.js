@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { locatedStops } from "./proximity.js";
+import { locatedStops } from "./stops.js";
 
 const louvre = { name: "Louvre", lat: 48.8606, lng: 2.3376 };
 const notreDame = { name: "Notre-Dame", lat: 48.853, lng: 2.3499 };

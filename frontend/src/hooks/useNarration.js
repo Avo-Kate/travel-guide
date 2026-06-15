@@ -59,12 +59,8 @@ export function useNarration(city) {
     [city, speak]
   );
 
-  const replay = useCallback(() => {
-    if (active) speak(active.text);
-  }, [active, speak]);
-
   // Stop any in-flight speech if the component using this hook unmounts.
   useEffect(() => stop, [stop]);
 
-  return { active, loadingName, speaking, error, play, stop, replay };
+  return { active, loadingName, speaking, error, play, stop };
 }
