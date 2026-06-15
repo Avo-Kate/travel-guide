@@ -88,6 +88,12 @@ class NarrationResponse(BaseModel):
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
+def _require_anthropic_key() -> None:
+    """Guard endpoints that call Claude; 500 if the key isn't configured."""
+    if not ANTHROPIC_API_KEY:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY is not set")
+
+
 def _collect_text(content) -> str:
     """Join all text blocks from a Claude response into a single string."""
     return "".join(block.text for block in content if block.type == "text")
@@ -177,8 +183,7 @@ async def root():
 
 @app.post("/itinerary")
 async def itinerary(req: ItineraryRequest):
-    if not ANTHROPIC_API_KEY:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY is not set")
+    _require_anthropic_key()
 
     stops = await _generate_itinerary(req.city, req.days)
 
@@ -194,8 +199,7 @@ async def itinerary(req: ItineraryRequest):
 
 @app.post("/narration", response_model=NarrationResponse)
 async def narration(req: NarrationRequest):
-    if not ANTHROPIC_API_KEY:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY is not set")
+    _require_anthropic_key()
 
     response = await client.messages.create(
         model=MODEL,

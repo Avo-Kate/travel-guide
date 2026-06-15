@@ -1,6 +1,6 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import { useEffect, useRef, useState } from "react";
-import { locatedStops } from "../utils/proximity.js";
+import { locatedStops } from "../utils/stops.js";
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 

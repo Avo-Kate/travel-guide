@@ -8,6 +8,14 @@ const CATEGORY_COLORS = {
   other: "#6b7a8d",
 };
 
+// Label for a stop's Listen button, based on its current narration state.
+function listenLabel({ isLoading, isActive, speaking }) {
+  if (isLoading) return "…";
+  if (isActive && speaking) return "■ Stop";
+  if (isActive) return "▶ Replay";
+  return "▶ Listen";
+}
+
 // Groups stops by day and renders each with category badge, description and
 // duration. Each geocoded stop also gets a "Listen" button that plays Claude's
 // narration aloud; when a stop is active its narration text is shown inline.
@@ -38,14 +46,14 @@ export default function ItineraryList({
           {byDay[day]
             .slice()
             .sort((a, b) => a.order - b.order)
-            .map((stop, i) => {
+            .map((stop) => {
               const located = stop.lat != null && stop.lng != null;
               const isActive = active?.name === stop.name;
               const isLoading = loadingName === stop.name;
               const isVisited = visited?.has(stop.name);
               return (
                 <article
-                  key={`${day}-${i}`}
+                  key={`${day}-${stop.order}`}
                   className={isActive ? "stop-card is-active" : "stop-card"}
                   style={styles.card}
                 >
@@ -77,13 +85,7 @@ export default function ItineraryList({
                         className="listen-btn"
                         style={isActive ? styles.listenActive : styles.listen}
                       >
-                        {isLoading
-                          ? "…"
-                          : isActive && speaking
-                          ? "■ Stop"
-                          : isActive
-                          ? "▶ Replay"
-                          : "▶ Listen"}
+                        {listenLabel({ isLoading, isActive, speaking })}
                       </button>
                     )}
                   </div>
