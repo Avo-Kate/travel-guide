@@ -1,5 +1,7 @@
 # Wandr — Your AI Travel Guide
 
+[![CI](https://github.com/Avo-Kate/travel-guide/actions/workflows/ci.yml/badge.svg)](https://github.com/Avo-Kate/travel-guide/actions/workflows/ci.yml)
+
 Wandr turns a city and a number of days into a structured, mapped, geocoded itinerary — and narrates any stop aloud on demand, all on a single page.
 
 ## What it does
@@ -85,6 +87,27 @@ npm test           # or `npm run test:watch`
 
 Both suites run in well under a second.
 
+### Continuous integration
+
+Every push to `main` (or a `phase-*` branch) and every pull request runs both
+suites on GitHub Actions — backend `pytest` and frontend `vitest` + a production
+`vite build` — via [`.github/workflows/ci.yml`](.github/workflows/ci.yml). The CI
+badge above reflects the latest run on `main`.
+
+## Releases
+
+Versions are cut with annotated git tags. Pushing a `v*` tag triggers
+[`.github/workflows/release.yml`](.github/workflows/release.yml), which publishes
+a GitHub Release with auto-generated notes:
+
+```bash
+git tag -a v0.3.0 -m "Phase 3: polish"
+git push origin v0.3.0
+```
+
+Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
+`v0.2.0` Phase 2, `v0.3.0` Phase 3 / polish).
+
 ## Environment variables
 
 ### Backend (`backend/.env`)
@@ -124,14 +147,18 @@ Both suites run in well under a second.
 │       │   └── useNarration.js       # Fetch narration + Web Speech playback
 │       └── utils/
 │           ├── api.js                # API calls to the backend
-│           ├── proximity.js          # Geocoded-stop filtering (pure)
-│           └── proximity.test.js     # Vitest: locatedStops
+│           ├── stops.js              # Geocoded-stop filtering (pure)
+│           └── stops.test.js         # Vitest: locatedStops
 ├── backend/
 │   ├── main.py                       # FastAPI app: /itinerary + /narration
 │   ├── requirements.txt
 │   ├── tests/
 │   │   └── test_main.py              # offline tests for helpers + endpoints
 │   └── .env.example                  # API key placeholders
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                    # pytest + vitest + build on push/PR
+│       └── release.yml               # GitHub Release on v* tag push
 ├── .gitignore
 └── README.md
 ```
@@ -160,9 +187,12 @@ Both suites run in well under a second.
 - [x] Audio playback via Web Speech API
 - [x] Mark listened stops as visited on map
 
-### POC — Polish
-- [ ] Error handling and loading states
-- [ ] Mobile UI polish
+### POC — Phase 3: Polish
+- [x] Error handling and loading states (friendly network errors, loading skeleton)
+- [x] Mobile UI polish
+- [x] Accessibility touch-ups (alert/status roles, button aria-labels)
+- [x] Continuous integration (GitHub Actions: pytest + vitest + build)
+- [x] Release tagging (GitHub Release on `v*` tag)
 
 ### V2 (post-POC)
 - [ ] User accounts and authentication

@@ -206,6 +206,45 @@ button:disabled:hover {
   animation: rise 0.3s ease both;
 }
 
+/* ---- Loading skeleton (shown while the itinerary generates) ------------ */
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: rise 0.4s ease both;
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    #e9e3d7 25%,
+    #f2eee6 37%,
+    #e9e3d7 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
 /* ---- Plan view: list + map side by side on desktop, stacked on mobile -- */
 .plan-grid {
   display: grid;
@@ -246,6 +285,17 @@ button:disabled:hover {
   .plan-grid .map-column {
     position: static;
     height: 50vh;
+  }
+}
+
+/* Phones: tighten the page chrome and let the wordmark breathe. */
+@media (max-width: 480px) {
+  .wordmark {
+    font-size: 27px;
+  }
+
+  .day-heading {
+    font-size: 19px;
   }
 }
 

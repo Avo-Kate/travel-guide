@@ -83,6 +83,7 @@ export default function ItineraryList({
                         onClick={() => onListen(stop)}
                         disabled={isLoading}
                         className="listen-btn"
+                        aria-label={`Listen to narration for ${stop.name}`}
                         style={isActive ? styles.listenActive : styles.listen}
                       >
                         {listenLabel({ isLoading, isActive, speaking })}

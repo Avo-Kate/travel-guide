@@ -34,14 +34,24 @@ export default function App() {
       <main style={styles.main}>
         <section className="surface-card" style={styles.formCard}>
           <CityForm onSubmit={generate} loading={loading} city={city} />
-          {error && <p style={styles.error}>{error}</p>}
-          {speechError && <p style={styles.error}>{speechError}</p>}
+          {error && (
+            <p style={styles.error} role="alert">
+              {error}
+            </p>
+          )}
+          {speechError && (
+            <p style={styles.error} role="alert">
+              {speechError}
+            </p>
+          )}
           {hasItinerary && (
             <button onClick={clear} className="btn-ghost" disabled={loading}>
               Start over
             </button>
           )}
         </section>
+
+        {loading && !hasItinerary && <ItinerarySkeleton />}
 
         {hasItinerary && (
           <div className="plan-grid">
@@ -65,8 +75,41 @@ export default function App() {
   );
 }
 
+// Placeholder shown while the itinerary is generating (~10–20s of web search),
+// so the page reads as "working" rather than blank.
+function ItinerarySkeleton() {
+  return (
+    <div
+      className="skeleton-stack"
+      role="status"
+      aria-live="polite"
+      aria-label="Building your itinerary"
+    >
+      <span style={styles.srOnly}>Building your itinerary…</span>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="surface-card skeleton-card" aria-hidden="true">
+          <div className="skeleton-line" style={{ width: "55%" }} />
+          <div className="skeleton-line" style={{ width: "90%" }} />
+          <div className="skeleton-line" style={{ width: "80%" }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const styles = {
   page: { maxWidth: 1100, margin: "0 auto", padding: "28px 16px 60px" },
+  srOnly: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: "hidden",
+    clip: "rect(0 0 0 0)",
+    whiteSpace: "nowrap",
+    border: 0,
+  },
   main: { display: "flex", flexDirection: "column", gap: 22 },
   formCard: {
     background: "var(--white)",
