@@ -10,6 +10,8 @@ Enter a city and trip length. The backend uses Claude with live web search to sy
 
 Each stop has a **Listen** button: tap it and Claude writes a short, fun historical narration that's read aloud through your browser's built-in text-to-speech. Stops you've listened to are checked off and muted on the map.
 
+You can optionally **create an account and sign in** (email + password). The planner works fully as a guest — accounts are additive, and lay the groundwork for syncing trips across devices in a later phase.
+
 ## Tech stack
 
 - **Frontend:** React + Vite (plain JavaScript, no CSS framework)
@@ -18,7 +20,8 @@ Each stop has a **Listen** button: tap it and Claude writes a short, fun histori
 - **Maps:** Google Maps JavaScript API (`@googlemaps/js-api-loader`) for map display and pins
 - **Geocoding:** Google Geocoding API (place name → coordinates)
 - **Speech:** Browser Web Speech API (text-to-speech — no library, no cost)
-- **Storage:** Browser `localStorage` (no database)
+- **Auth:** JWT bearer tokens (PyJWT) with bcrypt-hashed passwords
+- **Storage:** User accounts in SQLite (SQLAlchemy); itineraries in browser `localStorage`
 
 ## Getting started
 
@@ -116,6 +119,8 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 | --------------------- | ---------------------------------------------------------------------- |
 | `ANTHROPIC_API_KEY`   | Anthropic API key — powers itinerary generation and narration.         |
 | `GOOGLE_MAPS_API_KEY` | Google API key with the **Geocoding API** enabled (place → lat/lng).   |
+| `JWT_SECRET`          | Secret used to sign auth tokens. Generate one: `openssl rand -hex 32`.  |
+| `DATABASE_URL`        | Optional — user-account database. Defaults to `sqlite:///./wandr.db`.   |
 
 ### Frontend (`frontend/.env`)
 
@@ -139,22 +144,30 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 │       ├── App.jsx                   # Single-page shell (form + list + map)
 │       ├── index.css                 # Global styles + responsive grid
 │       ├── components/
+│       │   ├── AccountBar.jsx        # Header sign in / sign up / sign out widget
 │       │   ├── CityForm.jsx          # City + days input form
 │       │   ├── ItineraryList.jsx     # List of stops (grouped by day) + Listen
 │       │   └── MapView.jsx           # Google Map with numbered stop pins
 │       ├── hooks/
+│       │   ├── useAuth.js            # Auth state + token persistence (localStorage)
 │       │   ├── useItinerary.js       # Fetch + persist itinerary (localStorage)
 │       │   └── useNarration.js       # Fetch narration + Web Speech playback
 │       └── utils/
-│           ├── api.js                # API calls to the backend
+│           ├── api.js                # Shared request helper + itinerary/narration
+│           ├── auth.js               # Auth API calls (register/login/me)
 │           ├── stops.js              # Geocoded-stop filtering (pure)
 │           └── stops.test.js         # Vitest: locatedStops
 ├── backend/
-│   ├── main.py                       # FastAPI app: /itinerary + /narration
+│   ├── main.py                       # FastAPI app: /itinerary + /narration + auth
+│   ├── auth.py                       # /auth routes + get_current_user dependency
+│   ├── security.py                   # bcrypt hashing + JWT helpers
+│   ├── models.py                     # SQLAlchemy User model
+│   ├── db.py                         # Engine, session, get_db dependency
 │   ├── requirements.txt
 │   ├── tests/
-│   │   └── test_main.py              # offline tests for helpers + endpoints
-│   └── .env.example                  # API key placeholders
+│   │   ├── test_main.py              # offline tests for helpers + endpoints
+│   │   └── test_auth.py             # offline tests for auth + security helpers
+│   └── .env.example                  # API key + secret placeholders
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml                    # pytest + vitest + build on push/PR
@@ -167,6 +180,9 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 
 - `POST /itinerary` — body `{ "city": "Paris", "days": 3 }` → array of stops, each with `day`, `order`, `name`, `description`, `duration_minutes`, `category`, `lat`, `lng`.
 - `POST /narration` — body `{ "stop_name": "Eiffel Tower", "city": "Paris" }` → `{ "narration": "..." }`.
+- `POST /auth/register` — body `{ "email": "you@example.com", "password": "..." }` (password ≥ 8 chars) → `{ "token", "user" }`. `409` if the email is taken.
+- `POST /auth/login` — same body → `{ "token", "user" }`. `401` on bad credentials.
+- `GET /auth/me` — requires `Authorization: Bearer <token>` → the current user. `401` if the token is missing or invalid.
 
 ## Build Checklist
 
@@ -194,9 +210,9 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 - [x] Continuous integration (GitHub Actions: pytest + vitest + build)
 - [x] Release tagging (GitHub Release on `v*` tag)
 
-### V2 (post-POC)
-- [ ] User accounts and authentication
-- [ ] Trip history
+### Phase 4 (post-POC)
+- [x] User accounts and authentication (register / login / JWT, optional guest mode)
+- [ ] Trip history (per-user server-side itineraries)
 - [ ] Offline mode
 - [ ] Itinerary editing (add/remove/reorder stops)
 - [ ] Multi-language narration

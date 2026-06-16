@@ -3,4 +3,7 @@ uvicorn
 anthropic
 httpx
 python-dotenv
-pydantic
+pydantic[email]
+sqlalchemy
+bcrypt
+pyjwt

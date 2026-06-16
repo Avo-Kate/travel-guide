@@ -16,6 +16,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+import auth
+from db import init_db
+
 load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
@@ -66,6 +69,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Create the user table (if needed) and mount the auth routes.
+init_db()
+app.include_router(auth.router)
 
 
 # --------------------------------------------------------------------------- #
