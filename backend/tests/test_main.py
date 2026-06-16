@@ -15,6 +15,9 @@ import os
 # uses override=False, so these win over anything in backend/.env.
 os.environ.setdefault("ANTHROPIC_API_KEY", "test-anthropic-key")
 os.environ.setdefault("GOOGLE_MAPS_API_KEY", "test-google-key")
+# Keep the DB in memory so importing `main` (which runs init_db) never writes a
+# wandr.db file during the test run.
+os.environ.setdefault("DATABASE_URL", "sqlite://")
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

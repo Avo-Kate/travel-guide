@@ -1,11 +1,14 @@
 import { useState } from "react";
+import AccountBar from "./components/AccountBar.jsx";
 import CityForm from "./components/CityForm.jsx";
 import ItineraryList from "./components/ItineraryList.jsx";
 import MapView from "./components/MapView.jsx";
+import { useAuth } from "./hooks/useAuth.js";
 import { useItinerary } from "./hooks/useItinerary.js";
 import { useNarration } from "./hooks/useNarration.js";
 
 export default function App() {
+  const { user, ready, login, register, logout } = useAuth();
   const { itinerary, city, loading, error, generate, clear } = useItinerary();
   const { active, speaking, loadingName, error: speechError, play, stop } =
     useNarration(city);
@@ -27,8 +30,17 @@ export default function App() {
   return (
     <div style={styles.page}>
       <header className="app-header">
-        <h1 className="wordmark">Wandr</h1>
-        <p className="tagline">Your AI travel guide</p>
+        <div>
+          <h1 className="wordmark">Wandr</h1>
+          <p className="tagline">Your AI travel guide</p>
+        </div>
+        <AccountBar
+          user={user}
+          ready={ready}
+          onLogin={login}
+          onRegister={register}
+          onLogout={logout}
+        />
       </header>
 
       <main style={styles.main}>
