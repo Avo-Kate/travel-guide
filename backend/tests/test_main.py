@@ -120,6 +120,18 @@ def test_extract_json_array_surrounded_by_prose():
     assert main._extract_json_array(text) == [{"order": 1}, {"order": 2}]
 
 
+def test_extract_json_array_strips_citation_tags():
+    # Web search wraps cited text in <cite> tags; they must not leak into values.
+    text = (
+        '[{"name": "Slot Zeist", "description": '
+        '"<cite index=\\"28-1,28-2\\">A 17th-century castle.</cite> Lovely gardens."}]'
+    )
+    result = main._extract_json_array(text)
+    assert result == [
+        {"name": "Slot Zeist", "description": "A 17th-century castle. Lovely gardens."}
+    ]
+
+
 def test_extract_json_array_no_array_raises():
     with pytest.raises(ValueError):
         main._extract_json_array("There is no array here.")

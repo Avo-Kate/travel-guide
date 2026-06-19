@@ -1,35 +1,43 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchItinerary } from "../utils/api.js";
+import {
+  createItinerary,
+  deleteItinerary,
+  getItinerary,
+  listItineraries,
+} from "../utils/itineraries.js";
 
 const STORAGE_KEY = "wandr.itinerary";
 
-// Manages itinerary state: loads/saves to localStorage and fetches from the API.
-export function useItinerary() {
+// Manages itinerary state and fetches plans from the API. Storage depends on
+// auth: signed-in users (a `token` is present) keep a server-side trip history;
+// guests fall back to a single most-recent plan in localStorage.
+export function useItinerary(token) {
   const [itinerary, setItinerary] = useState(null);
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [history, setHistory] = useState([]);
 
-  // Hydrate from localStorage on first mount.
+  // Re-initialise whenever auth changes. Signing in loads the server history
+  // (and drops any guest view); signing out restores the localStorage plan.
   useEffect(() => {
+    setError(null);
+    if (token) {
+      setItinerary(null);
+      setCity("");
+      listItineraries(token).then(setHistory).catch(() => setHistory([]));
+      return;
+    }
+    setHistory([]);
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setItinerary(parsed.stops);
-        setCity(parsed.city || "");
-      }
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      setItinerary(saved?.stops ?? null);
+      setCity(saved?.city ?? "");
     } catch {
       // Ignore corrupt storage.
     }
-  }, []);
-
-  const persist = useCallback((stops, cityName) => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ stops, city: cityName })
-    );
-  }, []);
+  }, [token]);
 
   const generate = useCallback(
     async (cityName, days) => {
@@ -39,7 +47,12 @@ export function useItinerary() {
         const stops = await fetchItinerary(cityName, days);
         setItinerary(stops);
         setCity(cityName);
-        persist(stops, cityName);
+        if (token) {
+          const saved = await createItinerary(token, { city: cityName, days, stops });
+          setHistory((prev) => [toSummary(saved), ...prev]);
+        } else {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, city: cityName }));
+        }
         return stops;
       } catch (err) {
         setError(err.message);
@@ -48,15 +61,57 @@ export function useItinerary() {
         setLoading(false);
       }
     },
-    [persist]
+    [token]
   );
 
+  // Load a saved trip from history into the main view.
+  const loadTrip = useCallback(
+    async (id) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const trip = await getItinerary(token, id);
+        setItinerary(trip.stops);
+        setCity(trip.city);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token]
+  );
+
+  const removeTrip = useCallback(
+    async (id) => {
+      try {
+        await deleteItinerary(token, id);
+        setHistory((prev) => prev.filter((t) => t.id !== id));
+      } catch (err) {
+        setError(err.message);
+      }
+    },
+    [token]
+  );
+
+  // Clear the current view. For guests this also forgets the stored plan;
+  // signed-in users keep their saved trips in history.
   const clear = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    if (!token) localStorage.removeItem(STORAGE_KEY);
     setItinerary(null);
     setCity("");
     setError(null);
-  }, []);
+  }, [token]);
 
-  return { itinerary, city, loading, error, generate, clear };
+  return { itinerary, city, loading, error, history, generate, loadTrip, removeTrip, clear };
+}
+
+function toSummary(trip) {
+  return {
+    id: trip.id,
+    city: trip.city,
+    days: trip.days,
+    stop_count: trip.stops.length,
+    created_at: trip.created_at,
+  };
 }

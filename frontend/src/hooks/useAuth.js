@@ -8,23 +8,28 @@ const TOKEN_KEY = "wandr.token";
 // Auth is optional (guest mode) — a null `user` just means "not signed in".
 export function useAuth() {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
+    const stored = localStorage.getItem(TOKEN_KEY);
+    if (!stored) {
       setReady(true);
       return;
     }
-    fetchMe(token)
+    fetchMe(stored)
       .then(setUser)
-      .catch(() => localStorage.removeItem(TOKEN_KEY))
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY);
+        setToken(null);
+      })
       .finally(() => setReady(true));
   }, []);
 
   const authenticate = useCallback(async (apiCall, email, password) => {
-    const { token, user: u } = await apiCall(email.trim().toLowerCase(), password);
-    localStorage.setItem(TOKEN_KEY, token);
+    const { token: t, user: u } = await apiCall(email.trim().toLowerCase(), password);
+    localStorage.setItem(TOKEN_KEY, t);
+    setToken(t);
     setUser(u);
     return u;
   }, []);
@@ -41,8 +46,9 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
     setUser(null);
   }, []);
 
-  return { user, ready, login, register, logout };
+  return { user, token, ready, login, register, logout };
 }
