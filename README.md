@@ -21,7 +21,9 @@ You can optionally **create an account and sign in** (email + password). The pla
 - **Geocoding:** Google Geocoding API (place name → coordinates)
 - **Speech:** Browser Web Speech API (text-to-speech — no library, no cost)
 - **Auth:** JWT bearer tokens (PyJWT) with bcrypt-hashed passwords
-- **Storage:** User accounts in SQLite (SQLAlchemy); itineraries in browser `localStorage`
+- **Storage:** User accounts and saved trips in SQLite (SQLAlchemy). Signed-in
+  users get server-side trip history; guests keep their latest plan in browser
+  `localStorage`
 
 ## Getting started
 
@@ -147,26 +149,30 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 │       │   ├── AccountBar.jsx        # Header sign in / sign up / sign out widget
 │       │   ├── CityForm.jsx          # City + days input form
 │       │   ├── ItineraryList.jsx     # List of stops (grouped by day) + Listen
-│       │   └── MapView.jsx           # Google Map with numbered stop pins
+│       │   ├── MapView.jsx           # Google Map with numbered stop pins
+│       │   └── TripHistory.jsx       # Saved-trip list for signed-in users
 │       ├── hooks/
 │       │   ├── useAuth.js            # Auth state + token persistence (localStorage)
-│       │   ├── useItinerary.js       # Fetch + persist itinerary (localStorage)
+│       │   ├── useItinerary.js       # Fetch + persist plan (server for users, localStorage for guests)
 │       │   └── useNarration.js       # Fetch narration + Web Speech playback
 │       └── utils/
 │           ├── api.js                # Shared request helper + itinerary/narration
 │           ├── auth.js               # Auth API calls (register/login/me)
+│           ├── itineraries.js        # Trip-history API calls (create/list/get/delete)
 │           ├── stops.js              # Geocoded-stop filtering (pure)
 │           └── stops.test.js         # Vitest: locatedStops
 ├── backend/
-│   ├── main.py                       # FastAPI app: /itinerary + /narration + auth
+│   ├── main.py                       # FastAPI app: /itinerary + /narration + routers
 │   ├── auth.py                       # /auth routes + get_current_user dependency
+│   ├── itineraries.py                # /itineraries routes (per-user trip history)
 │   ├── security.py                   # bcrypt hashing + JWT helpers
-│   ├── models.py                     # SQLAlchemy User model
+│   ├── models.py                     # SQLAlchemy User + Itinerary models
 │   ├── db.py                         # Engine, session, get_db dependency
 │   ├── requirements.txt
 │   ├── tests/
 │   │   ├── test_main.py              # offline tests for helpers + endpoints
-│   │   └── test_auth.py             # offline tests for auth + security helpers
+│   │   ├── test_auth.py             # offline tests for auth + security helpers
+│   │   └── test_itineraries.py      # offline tests for trip history
 │   └── .env.example                  # API key + secret placeholders
 ├── .github/
 │   └── workflows/
@@ -183,6 +189,13 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 - `POST /auth/register` — body `{ "email": "you@example.com", "password": "..." }` (password ≥ 8 chars) → `{ "token", "user" }`. `409` if the email is taken.
 - `POST /auth/login` — same body → `{ "token", "user" }`. `401` on bad credentials.
 - `GET /auth/me` — requires `Authorization: Bearer <token>` → the current user. `401` if the token is missing or invalid.
+
+All `/itineraries` routes require `Authorization: Bearer <token>` and are scoped to the caller (one user never sees another's trips; an unowned id returns `404`).
+
+- `POST /itineraries` — body `{ "city", "days", "stops" }` → the saved trip (`201`).
+- `GET /itineraries` — → array of summaries `{ id, city, days, stop_count, created_at }`, newest first.
+- `GET /itineraries/{id}` — → the saved trip with its `stops`. `404` if not found.
+- `DELETE /itineraries/{id}` — → `204`. `404` if not found.
 
 ## Build Checklist
 
@@ -212,7 +225,7 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 
 ### Phase 4 (post-POC)
 - [x] User accounts and authentication (register / login / JWT, optional guest mode)
-- [ ] Trip history (per-user server-side itineraries)
+- [x] Trip history (per-user server-side itineraries)
 - [ ] Offline mode
 - [ ] Itinerary editing (add/remove/reorder stops)
 - [ ] Multi-language narration

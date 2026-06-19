@@ -3,13 +3,15 @@ import AccountBar from "./components/AccountBar.jsx";
 import CityForm from "./components/CityForm.jsx";
 import ItineraryList from "./components/ItineraryList.jsx";
 import MapView from "./components/MapView.jsx";
+import TripHistory from "./components/TripHistory.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { useItinerary } from "./hooks/useItinerary.js";
 import { useNarration } from "./hooks/useNarration.js";
 
 export default function App() {
-  const { user, ready, login, register, logout } = useAuth();
-  const { itinerary, city, loading, error, generate, clear } = useItinerary();
+  const { user, token, ready, login, register, logout } = useAuth();
+  const { itinerary, city, loading, error, history, generate, loadTrip, removeTrip, clear } =
+    useItinerary(token);
   const { active, speaking, loadingName, error: speechError, play, stop } =
     useNarration(city);
   const [visited, setVisited] = useState(() => new Set());
@@ -62,6 +64,15 @@ export default function App() {
             </button>
           )}
         </section>
+
+        {user && (
+          <TripHistory
+            trips={history}
+            onLoad={loadTrip}
+            onDelete={removeTrip}
+            disabled={loading}
+          />
+        )}
 
         {loading && !hasItinerary && <ItinerarySkeleton />}
 

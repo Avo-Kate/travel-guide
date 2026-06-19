@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import auth
+import itineraries
 from db import init_db
 
 load_dotenv()
@@ -73,6 +74,7 @@ app.add_middleware(
 # Create the user table (if needed) and mount the auth routes.
 init_db()
 app.include_router(auth.router)
+app.include_router(itineraries.router)
 
 
 # --------------------------------------------------------------------------- #
@@ -113,6 +115,11 @@ def _extract_json_array(text: str):
     wrap it in stray prose or a markdown fence, so we locate the array span and
     parse it defensively.
     """
+    # Web search cites sources by wrapping text in <cite index="...">…</cite>
+    # tags; strip the tags (keeping their inner text) so they don't leak into
+    # stop descriptions.
+    text = re.sub(r"</?cite[^>]*>", "", text)
+
     # Strip markdown code fences if present.
     fenced = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", text, re.DOTALL)
     candidate = fenced.group(1) if fenced else None
