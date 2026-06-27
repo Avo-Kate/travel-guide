@@ -6,8 +6,9 @@ const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // Renders a Google Map with a numbered pin for each stop. Clicking a pin opens
 // an info window with the stop name and description. `visited` is an optional
-// Set of stop names that should render in a muted colour.
-export default function MapView({ stops, visited }) {
+// Set of stop names that should render in a muted colour. The Maps tiles need
+// the network, so offline (before the map has loaded) we show a placeholder.
+export default function MapView({ stops, visited, online = true }) {
   const mapRef = useRef(null);
   const mapObj = useRef(null);
   const markers = useRef([]);
@@ -15,8 +16,10 @@ export default function MapView({ stops, visited }) {
   const [error, setError] = useState(null);
   const [ready, setReady] = useState(false);
 
-  // Load the Maps JS API once.
+  // Load the Maps JS API once. Skip the network call while offline; the effect
+  // re-runs when connectivity returns.
   useEffect(() => {
+    if (!online || ready) return;
     if (!API_KEY) {
       setError("Set VITE_GOOGLE_MAPS_API_KEY in frontend/.env to enable the map.");
       return;
@@ -42,7 +45,7 @@ export default function MapView({ stops, visited }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [online, ready]);
 
   // (Re)draw markers whenever the stops or visited set change.
   useEffect(() => {
@@ -95,6 +98,14 @@ export default function MapView({ stops, visited }) {
       mapObj.current.fitBounds(bounds, 60);
     }
   }, [stops, visited, ready]);
+
+  if (!online && !ready) {
+    return (
+      <div style={styles.placeholder}>
+        The map needs a connection — your stops are listed alongside.
+      </div>
+    );
+  }
 
   if (error) {
     return <div style={styles.placeholder}>{error}</div>;

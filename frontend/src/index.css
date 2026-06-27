@@ -206,6 +206,17 @@ button:disabled:hover {
   animation: rise 0.3s ease both;
 }
 
+/* ---- Offline banner ----------------------------------------------------- */
+.offline-banner {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: #fbeec9;
+  border: 1px solid #e6d49a;
+  color: #6b551b;
+  font-size: 14px;
+}
+
 /* ---- Loading skeleton (shown while the itinerary generates) ------------ */
 .skeleton-stack {
   display: flex;
