@@ -7,6 +7,7 @@ import TripHistory from "./components/TripHistory.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { useItinerary } from "./hooks/useItinerary.js";
 import { useNarration } from "./hooks/useNarration.js";
+import { useOnlineStatus } from "./hooks/useOnlineStatus.js";
 
 export default function App() {
   const { user, token, ready, login, register, logout } = useAuth();
@@ -14,6 +15,7 @@ export default function App() {
     useItinerary(token);
   const { active, speaking, loadingName, error: speechError, play, stop } =
     useNarration(city);
+  const online = useOnlineStatus();
   const [visited, setVisited] = useState(() => new Set());
 
   const hasItinerary = itinerary && itinerary.length > 0;
@@ -46,8 +48,15 @@ export default function App() {
       </header>
 
       <main style={styles.main}>
+        {!online && (
+          <p className="offline-banner" role="status">
+            You're offline — you can browse saved trips, but planning a new one
+            and the map need a connection.
+          </p>
+        )}
+
         <section className="surface-card" style={styles.formCard}>
-          <CityForm onSubmit={generate} loading={loading} city={city} />
+          <CityForm onSubmit={generate} loading={loading} city={city} online={online} />
           {error && (
             <p style={styles.error} role="alert">
               {error}
@@ -89,7 +98,7 @@ export default function App() {
               />
             </div>
             <div className="map-column">
-              <MapView stops={itinerary} visited={visited} />
+              <MapView stops={itinerary} visited={visited} online={online} />
             </div>
           </div>
         )}

@@ -1,14 +1,15 @@
 import { useState } from "react";
 
 // City + duration input form. Calls onSubmit(city, days) and shows a loading
-// message while the itinerary is being generated.
-export default function CityForm({ onSubmit, loading, city: initialCity }) {
+// message while the itinerary is being generated. Generating needs the AI
+// backend, so the form is disabled while `online` is false.
+export default function CityForm({ onSubmit, loading, city: initialCity, online = true }) {
   const [city, setCity] = useState(initialCity || "");
   const [days, setDays] = useState(3);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!city.trim() || loading) return;
+    if (!city.trim() || loading || !online) return;
     onSubmit(city.trim(), Number(days));
   };
 
@@ -41,8 +42,16 @@ export default function CityForm({ onSubmit, loading, city: initialCity }) {
         </label>
       </div>
 
-      <button type="submit" className="btn-primary" disabled={loading || !city.trim()}>
-        {loading ? `Finding the best stops in ${city || "your city"}…` : "Plan my trip"}
+      <button
+        type="submit"
+        className="btn-primary"
+        disabled={loading || !city.trim() || !online}
+      >
+        {!online
+          ? "Offline — reconnect to plan a trip"
+          : loading
+          ? `Finding the best stops in ${city || "your city"}…`
+          : "Plan my trip"}
       </button>
     </form>
   );

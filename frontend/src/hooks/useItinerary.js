@@ -6,6 +6,13 @@ import {
   getItinerary,
   listItineraries,
 } from "../utils/itineraries.js";
+import {
+  cacheHistory,
+  cacheTrip,
+  clearOfflineCache,
+  readCachedHistory,
+  readCachedTrip,
+} from "../utils/offline.js";
 
 const STORAGE_KEY = "wandr.itinerary";
 
@@ -26,9 +33,18 @@ export function useItinerary(token) {
     if (token) {
       setItinerary(null);
       setCity("");
-      listItineraries(token).then(setHistory).catch(() => setHistory([]));
+      // Online: refresh from the server and mirror it for offline use.
+      // Offline (fetch rejects): fall back to the last cached history.
+      listItineraries(token)
+        .then((list) => {
+          setHistory(list);
+          cacheHistory(list);
+        })
+        .catch(() => setHistory(readCachedHistory()));
       return;
     }
+    // Guest / signed out: forget any cached server trips.
+    clearOfflineCache();
     setHistory([]);
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
@@ -49,7 +65,12 @@ export function useItinerary(token) {
         setCity(cityName);
         if (token) {
           const saved = await createItinerary(token, { city: cityName, days, stops });
-          setHistory((prev) => [toSummary(saved), ...prev]);
+          cacheTrip(saved);
+          setHistory((prev) => {
+            const next = [toSummary(saved), ...prev];
+            cacheHistory(next);
+            return next;
+          });
         } else {
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ stops, city: cityName }));
         }
@@ -71,10 +92,18 @@ export function useItinerary(token) {
       setError(null);
       try {
         const trip = await getItinerary(token, id);
+        cacheTrip(trip);
         setItinerary(trip.stops);
         setCity(trip.city);
       } catch (err) {
-        setError(err.message);
+        // Offline: show the cached copy if we have one, else surface the error.
+        const cached = readCachedTrip(id);
+        if (cached) {
+          setItinerary(cached.stops);
+          setCity(cached.city);
+        } else {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
@@ -86,7 +115,11 @@ export function useItinerary(token) {
     async (id) => {
       try {
         await deleteItinerary(token, id);
-        setHistory((prev) => prev.filter((t) => t.id !== id));
+        setHistory((prev) => {
+          const next = prev.filter((t) => t.id !== id);
+          cacheHistory(next);
+          return next;
+        });
       } catch (err) {
         setError(err.message);
       }

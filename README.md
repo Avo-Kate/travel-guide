@@ -12,6 +12,8 @@ Each stop has a **Listen** button: tap it and Claude writes a short, fun histori
 
 You can optionally **create an account and sign in** (email + password). The planner works fully as a guest — accounts are additive, and lay the groundwork for syncing trips across devices in a later phase.
 
+Wandr is also an installable **offline-capable** app (PWA). The app shell is precached by a service worker, so it loads without a connection, and trips you've already opened stay readable offline. Planning a new trip and the live map still need the network — when you're offline the UI says so and disables those actions.
+
 ## Tech stack
 
 - **Frontend:** React + Vite (plain JavaScript, no CSS framework)
@@ -24,6 +26,8 @@ You can optionally **create an account and sign in** (email + password). The pla
 - **Storage:** User accounts and saved trips in SQLite (SQLAlchemy). Signed-in
   users get server-side trip history; guests keep their latest plan in browser
   `localStorage`
+- **Offline:** `vite-plugin-pwa` (Workbox service worker) precaches the app
+  shell; opened server trips are mirrored to `localStorage` for offline reads
 
 ## Getting started
 
@@ -58,6 +62,11 @@ npm run dev
 The app runs at `http://localhost:5173`.
 
 Open the app, enter `Paris` / `3` days, and submit. Generation takes ~10–20 seconds (Claude is searching the web). The itinerary then renders as a list and on the map.
+
+> **Offline mode** is served by a service worker, which is only generated in a
+> production build. To try it, run `npm run build && npm run preview`, load the
+> page once online, then go offline (DevTools → Network → Offline): the app
+> still loads and previously opened trips remain readable.
 
 ## Testing
 
@@ -139,8 +148,10 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 /
 ├── frontend/
 │   ├── index.html
-│   ├── vite.config.js
+│   ├── vite.config.js                  # Vite + vite-plugin-pwa (service worker)
 │   ├── package.json
+│   ├── public/
+│   │   └── pwa.svg                     # App / install icon
 │   └── src/
 │       ├── main.jsx                  # React entry point
 │       ├── App.jsx                   # Single-page shell (form + list + map)
@@ -154,11 +165,14 @@ Tags follow `vMAJOR.MINOR.PATCH` (the POC tracks the phases: `v0.1.0` Phase 1,
 │       ├── hooks/
 │       │   ├── useAuth.js            # Auth state + token persistence (localStorage)
 │       │   ├── useItinerary.js       # Fetch + persist plan (server for users, localStorage for guests)
-│       │   └── useNarration.js       # Fetch narration + Web Speech playback
+│       │   ├── useNarration.js       # Fetch narration + Web Speech playback
+│       │   └── useOnlineStatus.js    # Tracks browser online/offline events
 │       └── utils/
 │           ├── api.js                # Shared request helper + itinerary/narration
 │           ├── auth.js               # Auth API calls (register/login/me)
 │           ├── itineraries.js        # Trip-history API calls (create/list/get/delete)
+│           ├── offline.js            # localStorage mirror of server trips (offline reads)
+│           ├── offline.test.js       # Vitest: offline cache round-trips
 │           ├── stops.js              # Geocoded-stop filtering (pure)
 │           └── stops.test.js         # Vitest: locatedStops
 ├── backend/
@@ -226,7 +240,7 @@ All `/itineraries` routes require `Authorization: Bearer <token>` and are scoped
 ### Phase 4 (post-POC)
 - [x] User accounts and authentication (register / login / JWT, optional guest mode)
 - [x] Trip history (per-user server-side itineraries)
-- [ ] Offline mode
+- [x] Offline mode (installable PWA: service-worker shell precache + offline trip reads)
 - [ ] Itinerary editing (add/remove/reorder stops)
 - [ ] Multi-language narration
 ```
